@@ -47,7 +47,7 @@ from scipy.io.wavfile import write
 fs = 44100  # Sample rate
 seconds = 3  # Duration of recording
 
-myrecording = sd.rec(args.duration * args.samplerate, samplerate=args.samplerate, channels=args.channels)
+myrecording = sd.rec(args.duration * args.samplerate, samplerate=args.samplerate, channels=args.channels, device=args.device)
 sd.wait()  # Wait until recording is finished
 write("recordings/"+args.filename, args.samplerate, myrecording)  # Save as WAV file 
 
