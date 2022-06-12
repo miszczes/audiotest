@@ -38,14 +38,10 @@ parser.add_argument(
 parser.add_argument(
     '-t', '--subtype', type=str, help='typ nagrania (np. "PCM_24")')
 parser.add_argument(
-    '-D', '--duration', type=int, default=3, help='dlugosc trwania nagrywania')
+    '-D', '--duration', type=int, default=3, help='dlugosc trwania nagrywania, domyslnie 3s')
 args = parser.parse_args(remaining)
 
-
 from scipy.io.wavfile import write
-
-fs = 44100  # Sample rate
-seconds = 3  # Duration of recording
 
 myrecording = sd.rec(args.duration * args.samplerate, samplerate=args.samplerate, channels=args.channels, device=args.device)
 sd.wait()  # Wait until recording is finished
