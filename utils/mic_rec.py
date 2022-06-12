@@ -1,11 +1,7 @@
 import argparse
-import tempfile
-import queue
-import sys
 import datetime
 
 import sounddevice as sd
-import soundfile as sf
 import numpy  
 assert numpy 
 
@@ -20,7 +16,7 @@ file_name = "nagranie_"+str(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument(
     '-l', '--list-devices', action='store_true',
-    help='show list of audio devices and exit')
+    help='wypisz urzadzenia audio')
 args, remaining = parser.parse_known_args()
 if args.list_devices:
     print(sd.query_devices())
@@ -31,16 +27,16 @@ parser = argparse.ArgumentParser(
     parents=[parser])
 parser.add_argument(
     'filename', nargs='?', type=str, default=file_name, metavar='FILENAME',
-    help='audio file to store recording to')
+    help='nazwa pliku audio który ma byc nagrany')
 parser.add_argument(
     '-d', '--device', type=int_or_str,
-    help='input device (numeric ID or substring)')
+    help='urzadzenie wyjsciowe (numeryczne ID, badz string)')
 parser.add_argument(
-    '-r', '--samplerate', type=int, default=44100, help='sampling rate')
+    '-r', '--samplerate', type=int, default=44100, help='czestotliwosc probkowania')
 parser.add_argument(
-    '-c', '--channels', type=int, default=1, help='number of input channels')
+    '-c', '--channels', type=int, default=1, help='ilosc kanalow')
 parser.add_argument(
-    '-t', '--subtype', type=str, help='sound file subtype (e.g. "PCM_24")')
+    '-t', '--subtype', type=str, help='typ nagrania (np. "PCM_24")')
 parser.add_argument(
     '-D', '--duration', type=int, default=3, help='dlugosc trwania nagrywania')
 args = parser.parse_args(remaining)
