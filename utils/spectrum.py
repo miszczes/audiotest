@@ -32,7 +32,7 @@ def dbfft(x, fs, win=None, ref=32768):
     s_mag = np.abs(sp) * 2 / np.sum(win)
 
     # Convert to dBFS
-    s_dbfs = 20 * np.log10(s_mag/ref)
+    s_dbfs = 20 * np.log10((s_mag/ref)/20*10**-6)
     
     if len(freq) > len(s_dbfs):
         freq = freq[:len(s_dbfs)]
@@ -58,7 +58,7 @@ def show_spectrum(data: str):
     freqs, FFT = dbfft(signal, s_rate)
 
     plt.xscale("log")
-    plt.plot(freqs, FFT)                                                          
+    plt.plot(freqs[range(100, len(freqs))], FFT[range(100, len(FFT))])                                                          
     plt.xlabel('Frequency [Hz]')
     plt.ylabel('Amplitude [dB]')
     plt.grid(True)

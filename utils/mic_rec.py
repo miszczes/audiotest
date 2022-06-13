@@ -3,7 +3,9 @@ import datetime
 
 import sounddevice as sd
 import numpy  
-assert numpy 
+assert numpy
+
+from spectrum import show_spectrum
 
 
 def int_or_str(text):
@@ -46,5 +48,9 @@ from scipy.io.wavfile import write
 myrecording = sd.rec(args.duration * args.samplerate, samplerate=args.samplerate, channels=args.channels, device=args.device)
 sd.wait()  # Wait until recording is finished
 write("recordings/"+args.filename, args.samplerate, myrecording)  # Save as WAV file 
+
+print(f"Badanie zakonczone.\nPlik znajduje sie w recordings/{args.filename}")
+show_spectrum("recordings/"+args.filename)
+
 
 parser.exit()

@@ -3,14 +3,17 @@ import threading
 import time
 import scipy.io.wavfile as wavfile
 import sys
-from utils.spectrum import show_spectrum
 
 
+import py_compile
+py_compile.compile("utils/playback.py")
+py_compile.compile("utils/mic_rec.py")
+
+global file_name
 def return_length(filename: str):
     s_rate, signal = wavfile.read(filename) 
     N = signal.shape[0]
     secs = N / float(s_rate)
-    print (f"Czas trwania: {secs}s")
     return int(secs)
 
 def recording(length: str):
@@ -35,9 +38,6 @@ def init_test(timeout: int, filename: str):
 
     thread1.join()
     thread2.join()
-    print("Badanie zakonczone")
 
 init_test(5, "chirp.wav")
-#show_spectrum("recordings/nagranie_2022-06-13-01-49-19.wav")
-
 
