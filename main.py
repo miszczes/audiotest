@@ -6,23 +6,29 @@ import sys
 
 
 import py_compile
+
 py_compile.compile("utils/playback.py")
 py_compile.compile("utils/mic_rec.py")
 
 global file_name
+
+
 def return_length(filename: str):
-    s_rate, signal = wavfile.read(filename) 
+    s_rate, signal = wavfile.read(filename)
     N = signal.shape[0]
     secs = N / float(s_rate)
     return int(secs)
+
 
 def recording(length: str):
     cmd_rec = ["python", "utils/mic_rec.py", "-D", length]
     subprocess.run(cmd_rec)
 
+
 def playback(filename: str):
     cmd_play = ["python", "utils/playback.py", filename]
     subprocess.run(cmd_play)
+
 
 def init_test(timeout: int, filename: str):
     print(f"Badanie rozpocznie sie za {timeout} s")
@@ -39,5 +45,5 @@ def init_test(timeout: int, filename: str):
     thread1.join()
     thread2.join()
 
-init_test(5, "chirp.wav")
 
+init_test(5, "chirp.wav")

@@ -4,6 +4,7 @@ import scipy.fftpack as fftpk
 import numpy as np
 from matplotlib import pyplot as plt
 
+
 def dbfft(x, fs, win=None, ref=32768):
     """
     Calculate spectrum in dB scale
@@ -21,7 +22,7 @@ def dbfft(x, fs, win=None, ref=32768):
     if win is None:
         win = np.ones(N)
     if len(x) != len(win):
-            raise ValueError('Signal and window must be of the same length')
+        raise ValueError("Signal and window must be of the same length")
     x = x * win
     # Calculate real FFT and frequency vector
     sp = np.fft.rfft(x)
@@ -32,34 +33,35 @@ def dbfft(x, fs, win=None, ref=32768):
     s_mag = np.abs(sp) * 2 / np.sum(win)
 
     # Convert to dBFS
-    s_dbfs = 20 * np.log10((s_mag/ref)/20*10**-6)
-    
+    s_dbfs = 20 * np.log10((s_mag / ref) / 20 * 10**-6)
+
     if len(freq) > len(s_dbfs):
-        freq = freq[:len(s_dbfs)]
+        freq = freq[: len(s_dbfs)]
     if len(s_dbfs) > len(freq):
-        s_dbfs = s_dbfs[:len(freq)]
-        
+        s_dbfs = s_dbfs[: len(freq)]
+
     return freq, s_dbfs
 
+
 def show_spectrum(data: str):
-    s_rate, signal = wavfile.read(data) 
-    print (f"Czestotliwosc probkowania: {s_rate} Hz")
+    s_rate, signal = wavfile.read(data)
+    print(f"Czestotliwosc probkowania: {s_rate} Hz")
     l_audio = len(signal.shape)
-    print (f"Ilosc kanalow: {l_audio}")
+    print(f"Ilosc kanalow: {l_audio}")
     if l_audio == 2:
         signal = signal.sum(axis=1) / 2
     N = signal.shape[0]
-    print (f"Ilosc probek N: {N}")
+    print(f"Ilosc probek N: {N}")
     secs = N / float(s_rate)
-    print (f"Czas trwania: {secs}s")
-    Ts = 1.0/s_rate # sampling interval in time
-    print (f"Okres T pomiedzy kolejnymi probkami: {Ts}s")
+    print(f"Czas trwania: {secs}s")
+    Ts = 1.0 / s_rate  # sampling interval in time
+    print(f"Okres T pomiedzy kolejnymi probkami: {Ts}s")
 
     freqs, FFT = dbfft(signal, s_rate)
 
     plt.xscale("log")
-    plt.plot(freqs[range(100, len(freqs))], FFT[range(100, len(FFT))])                                                          
-    plt.xlabel('Frequency [Hz]')
-    plt.ylabel('Amplitude [dB]')
+    plt.plot(freqs[range(100, len(freqs))], FFT[range(100, len(FFT))])
+    plt.xlabel("Frequency [Hz]")
+    plt.ylabel("Amplitude [dB]")
     plt.grid(True)
     plt.show()

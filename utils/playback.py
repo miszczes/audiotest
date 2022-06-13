@@ -14,8 +14,8 @@ def int_or_str(text):
 
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument(
-    '-l', '--list-devices', action='store_true',
-    help='wypisz urzadzenia audio')
+    "-l", "--list-devices", action="store_true", help="wypisz urzadzenia audio"
+)
 args, remaining = parser.parse_known_args()
 if args.list_devices:
     print(sd.query_devices())
@@ -23,13 +23,17 @@ if args.list_devices:
 parser = argparse.ArgumentParser(
     description=__doc__,
     formatter_class=argparse.RawDescriptionHelpFormatter,
-    parents=[parser])
+    parents=[parser],
+)
 parser.add_argument(
-    'filename', metavar='FILENAME',
-    help='nazwa pliku audio który ma byc nagrany')
+    "filename", metavar="FILENAME", help="nazwa pliku audio który ma byc nagrany"
+)
 parser.add_argument(
-    '-d', '--device', type=int_or_str,
-    help='rzadzenie wyjsciowe (numeryczne ID, badz string)')
+    "-d",
+    "--device",
+    type=int_or_str,
+    help="rzadzenie wyjsciowe (numeryczne ID, badz string)",
+)
 args = parser.parse_args(remaining)
 
 event = threading.Event()
@@ -44,18 +48,22 @@ try:
         if status:
             print(status)
         chunksize = min(len(data) - current_frame, frames)
-        outdata[:chunksize] = data[current_frame:current_frame + chunksize]
+        outdata[:chunksize] = data[current_frame : current_frame + chunksize]
         if chunksize < frames:
             outdata[chunksize:] = 0
             raise sd.CallbackStop()
         current_frame += chunksize
 
     stream = sd.OutputStream(
-        samplerate=fs, device=args.device, channels=data.shape[1],
-        callback=callback, finished_callback=event.set)
+        samplerate=fs,
+        device=args.device,
+        channels=data.shape[1],
+        callback=callback,
+        finished_callback=event.set,
+    )
     with stream:
         event.wait()  # Wait until playback is finished
 except KeyboardInterrupt:
-    parser.exit('\nPrzerwano przez uzytkownika')
+    parser.exit("\nPrzerwano przez uzytkownika")
 except Exception as e:
-    parser.exit(type(e).__name__ + ': ' + str(e))
+    parser.exit(type(e).__name__ + ": " + str(e))
