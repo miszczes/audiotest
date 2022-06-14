@@ -3,10 +3,11 @@ import datetime
 
 import sounddevice as sd
 import numpy
-
 assert numpy
 
-from spectrum import show_spectrum
+import sys 
+sys.path.append("C:/Users/miszczes/Desktop/audiotest/utils") 
+from spectrum import get_spectrum
 
 
 def int_or_str(text):
@@ -61,7 +62,7 @@ parser.add_argument(
 args = parser.parse_args(remaining)
 
 from scipy.io.wavfile import write
-
+print("Badanie rozpoczyna sie, prosze zachowac cisze!")
 myrecording = sd.rec(
     args.duration * args.samplerate,
     samplerate=args.samplerate,
@@ -72,7 +73,10 @@ sd.wait()  # Wait until recording is finished
 write("recordings/" + args.filename, args.samplerate, myrecording)  # Save as WAV file
 
 print(f"Badanie zakonczone.\nPlik znajduje sie w recordings/{args.filename}")
-show_spectrum("recordings/" + args.filename)
+get_spectrum("recordings/" + args.filename, "plots/"+args.filename+".png")
 
+def get_file_name():
+    file_name = "plots/"+args.filename+".png"
+    return file_name
 
-parser.exit()
+#parser.exit()
