@@ -12,6 +12,5 @@ Maintainer & Developer: Mikołaj Szczęsny
 
 fig. 1. Front pannel ater initial run of the app.
 
-first option allows to change the desired input for recording the tested chirp
-
-the second one begins the testing process
+1. first option allows to change the desired input for recording the tested chirp
+2. the second one begins the testing process
