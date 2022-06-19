@@ -59,13 +59,14 @@ def init_test(timeout: int, filename: str):
     recnames = os.listdir("recordings/")
     get_filevalues("recordings/"+recnames[-1])
 def click_action(button):
-    button.pack_forget()
-    drop.pack_forget()
+    button.pack_forget() #przycisk znika
+    drop.pack_forget() #menu rozwijane znika
     root_tk.update()
-    init_test(5, "chirp.wav")
+    init_test(5, "chirp.wav") #rozpoczyna sie badanie
     plotnames = glob.glob(os.getcwd() + '/plots/*.png')
     latest_file = max(plotnames, key=os.path.getctime)
-    if "blad" in latest_file:
+    if "blad" in latest_file: #wyswietlenie wynikow
+        root_tk.geometry("250x100")
         my_string.set("Bledny pomiar:\n zaklocenia podczas pomiaru!")
         button.config(text=f"Wykonaj Badanie Ponownie!")
         button.pack()
@@ -82,7 +83,7 @@ def click_action(button):
         label.pack()
         button.config(text=f"Wykonaj Badanie Ponownie!")
         root_tk.update()
-        my_string.set(f"Badanie zakonczone! Wynik znajduje sie w\nplots\{latest_file}")
+        my_string.set(f"Badanie zakonczone! Wynik znajduje sie w\n{latest_file}")
     Tk.update(self=None)
 
 def create_command(func, *args, **kwargs):
