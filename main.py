@@ -2,7 +2,8 @@ import subprocess
 import threading
 import time
 import scipy.io.wavfile as wavfile
-import os
+import os, glob
+import sounddevice as sd
 
 from tkinter import *
 from PIL import ImageTk, Image
@@ -29,8 +30,8 @@ def get_filevalues(data: str):
     footer.place(anchor='s', relx=0.5, rely=1)
     change_textlabel(footer_text, f"Czas trwania: {secs} s\nIlosc probek N: {N}\nIlosc kanalow: {l_audio}\nCzestotliwosc probkowania: {s_rate} Hz\nOkres T pomiedzy kolejnymi probkami: {Ts} s")
 
-def recording(length: str):
-    cmd_rec = ["python", "utils/mic_rec.py", "-D", length]
+def recording(length: str, device: str):
+    cmd_rec = ["python", "utils/mic_rec.py", "-D", length, "-d", device]
     subprocess.run(cmd_rec)
 
 def playback(filename: str):
@@ -46,7 +47,7 @@ def init_test(timeout: int, filename: str):
         time.sleep(1)
     print("Standby...")
     change_textlabel(my_string, "Badanie rozpoczete, prosze zachowac cisze!")
-    thread1 = threading.Thread(recording(str(return_length(filename))))
+    thread1 = threading.Thread(recording(str(return_length(filename)), variable.get()))
     thread2 = threading.Thread(playback(filename))
 
     thread1.start()
@@ -59,21 +60,29 @@ def init_test(timeout: int, filename: str):
     get_filevalues("recordings/"+recnames[-1])
 def click_action(button):
     button.pack_forget()
+    drop.pack_forget()
     root_tk.update()
     init_test(5, "chirp.wav")
-    plotnames = os.listdir("plots/")
-    frame = Frame(root_tk, width=600, height=400)
-    frame.pack()
-    frame.place(anchor='center', relx=0.5, rely=0.5)
-
-    img = ImageTk.PhotoImage(Image.open("plots/"+plotnames[-1]))
-
-    label = Label(frame, image = img)
-    label.pack()
-    button.config(text=f"Wykonaj Badanie Ponownie!")
-    button.pack()
-    root_tk.update()
-    my_string.set(f"Badanie zakonczone! Wynik znajduje sie w\nplots/{plotnames[-1]}")
+    plotnames = glob.glob(os.getcwd() + '/plots/*.png')
+    latest_file = max(plotnames, key=os.path.getctime)
+    if "blad" in latest_file:
+        my_string.set("Bledny pomiar:\n zaklocenia podczas pomiaru!")
+        button.config(text=f"Wykonaj Badanie Ponownie!")
+        button.pack()
+        root_tk.update()
+    else:
+        root_tk.geometry("800x800")
+        frame = Frame(root_tk, width=600, height=400)
+        frame.pack()
+        frame.place(anchor='center', relx=0.5, rely=0.5)
+        img = ImageTk.PhotoImage(Image.open(latest_file))
+        label = Label(frame, image = img)
+        drop.pack()
+        button.pack()
+        label.pack()
+        button.config(text=f"Wykonaj Badanie Ponownie!")
+        root_tk.update()
+        my_string.set(f"Badanie zakonczone! Wynik znajduje sie w\nplots\{latest_file}")
     Tk.update(self=None)
 
 def create_command(func, *args, **kwargs):
@@ -81,14 +90,25 @@ def create_command(func, *args, **kwargs):
         return func(*args, **kwargs)
     return command
 
+devices = []
 root_tk = Tk()
-root_tk.geometry("800x800")
+root_tk.geometry("250x100")
 root_tk.title("AudioTest")
 click_button = Button(root_tk, text="Wykonaj Badanie Głośnika!")
 my_string = StringVar()
 footer_text = StringVar()
 label = Label(root_tk, textvariable=my_string)
 footer = Label(root_tk, textvariable=footer_text)
+variable = StringVar(root_tk)
+variable.set(sd.query_devices(kind = 'input')["name"]) # default value
+for dict in sd.query_devices():
+    for key, value in dict.items():
+        if key == 'name':
+            devices.append(value)
+
+drop = OptionMenu( root_tk , variable, *devices)
+drop.place(anchor='nw')
+drop.pack()
 click_button.pack()
 label.pack()
 footer.pack()
