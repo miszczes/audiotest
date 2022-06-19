@@ -1,5 +1,6 @@
 matplotlib==3.5.2
 numpy==1.22.3
+Pillow==9.1.1
 scipy==1.8.1
 sounddevice==0.4.4
 SoundFile==0.10.3.post1

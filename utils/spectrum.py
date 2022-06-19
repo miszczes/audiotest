@@ -1,8 +1,31 @@
 import scipy.io.wavfile as wavfile
-import scipy
-import scipy.fftpack as fftpk
 import numpy as np
 from matplotlib import pyplot as plt
+import datetime
+
+def amplify(data):
+    for i in range(len(data)):
+        data[i] += 140
+    return data
+
+def get_max_chirp_val(data: str):
+    s_rate, signal = wavfile.read(data)
+    freqs, FFT = dbfft(signal, s_rate)
+    #FFT = amplify(FFT)
+    return max(FFT)
+
+def interrupt_check(FFT, low_idx, data: str):
+    for element in low_idx:
+        if FFT[element] >= get_max_chirp_val(data):
+            return 0
+
+
+def zero(n):
+    zero_array = []
+    for _ in n:
+        zero_array.append(1)
+    return zero_array
+
 
 
 def dbfft(x, fs, win=None, ref=32768):
@@ -33,7 +56,7 @@ def dbfft(x, fs, win=None, ref=32768):
     s_mag = np.abs(sp) * 2 / np.sum(win)
 
     # Convert to dBFS
-    s_dbfs = 20 * np.log10((s_mag / ref) / 20 * 10**-6)
+    s_dbfs = 20 * np.log10((s_mag / ref))
 
     if len(freq) > len(s_dbfs):
         freq = freq[: len(s_dbfs)]
@@ -42,8 +65,40 @@ def dbfft(x, fs, win=None, ref=32768):
 
     return freq, s_dbfs
 
+def hl_envelopes_idx(s, dmin=1, dmax=1, split=False):
+    """
+    Input :
+    s: 1d-array, data signal from which to extract high and low envelopes
+    dmin, dmax: int, optional, size of chunks, use this if the size of the input signal is too big
+    split: bool, optional, if True, split the signal in half along its mean, might help to generate the envelope in some cases
+    Output :
+    lmin,lmax : high/low envelope idx of input signal s
+    """
 
-def show_spectrum(data: str):
+    # locals min      
+    lmin = (np.diff(np.sign(np.diff(s))) > 0).nonzero()[0] + 1 
+    # locals max
+    lmax = (np.diff(np.sign(np.diff(s))) < 0).nonzero()[0] + 1 
+    
+
+    if split:
+        # s_mid is zero if s centered around x-axis or more generally mean of signal
+        s_mid = np.mean(s) 
+        # pre-sorting of locals min based on relative position with respect to s_mid 
+        lmin = lmin[s[lmin]<s_mid]
+        # pre-sorting of local max based on relative position with respect to s_mid 
+        lmax = lmax[s[lmax]>s_mid]
+
+
+    # global max of dmax-chunks of locals max 
+    lmin = lmin[[i+np.argmin(s[lmin[i:i+dmin]]) for i in range(0,len(lmin),dmin)]]
+    # global min of dmin-chunks of locals min 
+    lmax = lmax[[i+np.argmax(s[lmax[i:i+dmax]]) for i in range(0,len(lmax),dmax)]]
+    
+    return lmin,lmax
+
+
+def get_spectrum(data: str, output: str):
     s_rate, signal = wavfile.read(data)
     print(f"Czestotliwosc probkowania: {s_rate} Hz")
     l_audio = len(signal.shape)
@@ -58,10 +113,20 @@ def show_spectrum(data: str):
     print(f"Okres T pomiedzy kolejnymi probkami: {Ts}s")
 
     freqs, FFT = dbfft(signal, s_rate)
+    #FFT = amplify(FFT)
+    high_idx, low_idx = hl_envelopes_idx(FFT, dmax = 100, split=True)
 
-    plt.xscale("log")
-    plt.plot(freqs[range(100, len(freqs))], FFT[range(100, len(FFT))])
-    plt.xlabel("Frequency [Hz]")
-    plt.ylabel("Amplitude [dB]")
-    plt.grid(True)
-    plt.show()
+    if interrupt_check(FFT, low_idx, "chirp.wav") == 0:
+        plt.plot(zero(low_idx), FFT[low_idx], 'r')
+        plt.xlabel("Bledny pomiar")
+        plt.ylabel("Bledny pomiar")
+        output = "plots/blad-zaklocenia_podczas_pomiaru_"+str(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))+".png"
+        plt.savefig(output)
+    else:
+        plt.plot(freqs[low_idx], FFT[low_idx],'g')
+        plt.xscale("log")
+        plt.xlabel("Frequency [Hz]")
+        plt.ylabel("Amplitude [dB]")
+        plt.grid(True, which = "both")
+        #plt.show()
+        plt.savefig(output)
