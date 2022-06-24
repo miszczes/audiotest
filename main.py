@@ -1,25 +1,37 @@
 import subprocess
 import threading
-import time
+import time, datetime
 import scipy.io.wavfile as wavfile
 import os, glob
+
 import sounddevice as sd
+import soundfile as sf
+
+from utils.spectrum import get_spectrum
 
 from tkinter import *
 from PIL import ImageTk, Image
 
 def filter_devices(in_out: str):
     devices = []
+    host_apis = []
     inout_devices =[]
+    inout_ = []
     for dict in sd.query_devices():
         for key, value in dict.items():
             if (key == in_out) and value > 0:
                     devices.append(dict)
     for dictio in devices:
         for key, value in dictio.items():
+            if key == "hostapi":
+                host_apis.append(sd.query_hostapis()[value])
+    for dictio in devices:
+        for key, value in dictio.items():
             if key == "name":
                 inout_devices.append(value)
-    return inout_devices
+    for i in range(len(host_apis)):
+        inout_.append(inout_devices[i]+", "+host_apis[i]["name"])
+    return inout_
 
 def change_textlabel(mystring, text: str):
     mystring.set(text)
@@ -43,13 +55,42 @@ def get_filevalues(data: str):
     footer.place(anchor='s', relx=0.5, rely=1)
     change_textlabel(footer_text, f"Czas trwania: {secs} s\nIlosc probek N: {N}\nIlosc kanalow: {l_audio}\nCzestotliwosc probkowania: {s_rate} Hz\nOkres T pomiedzy kolejnymi probkami: {Ts} s")
 
-def recording(length: str, device: str):
-    cmd_rec = ["python", "utils/mic_rec.py", "-D", length, "-d", device]
-    subprocess.run(cmd_rec)
+def recording(length: int, sample_rate, chann, device: str):
+    # cmd_rec = ["python", "utils/mic_rec.py", "-D", length, "-d", device]
+    # subprocess.run(cmd_rec)
+
+    file_name = (
+    "nagranie_" + str(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")) + ".wav"
+    )
+    from scipy.io.wavfile import write
+    print("Badanie rozpoczyna sie, prosze zachowac cisze!")
+    myrecording = sd.rec(
+        length * sample_rate,
+        samplerate=sample_rate,
+        channels=chann,
+        device=device,
+    )
+    sd.wait()  # Wait until recording is finished
+    write("recordings/" + file_name, sample_rate, myrecording)  # Save as WAV file
+    print(f"Badanie zakonczone.\nPlik znajduje sie w recordings/{file_name}")
+    get_spectrum("recordings/" + file_name, "plots/"+file_name+".png")
+    print("zakonczenie nagrywania")
 
 def playback(filename: str, device: str):
-    cmd_play = ["python", "utils/playback.py", filename, "-d", device]
-    subprocess.run(cmd_play)
+    # cmd_play = ["python", "utils/playback.py", filename, "-d", device]
+    # subprocess.run(cmd_play)
+
+    file_name = (
+    "nagranie_" + str(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")) + ".wav"
+    )
+    print("rozpoczecie playbacku")
+    from scipy.io.wavfile import read
+    samplerate, wavarray = read(filename)
+    sd.default.samplerate = samplerate
+    sd.default.device = device
+    sd.play(wavarray)
+    sd.wait() # wait until playback is finished
+    print("zakonczenie playbacku")
 
 def init_test(timeout: int, filename: str):
     print(f"Badanie rozpocznie sie za {timeout} s")
@@ -60,8 +101,12 @@ def init_test(timeout: int, filename: str):
         time.sleep(1)
     print("Standby...")
     change_textlabel(my_string, "Badanie rozpoczete, prosze zachowac cisze!")
-    thread1 = threading.Thread(recording(str(return_length(filename)), in_variable.get()))
-    thread2 = threading.Thread(playback(filename, out_variable.get()))
+    in_ = in_variable.get()
+    out_ = out_variable.get()
+    length = return_length(filename)
+
+    thread1 = threading.Thread(target=recording, args=(length, 44100, 2, in_,))
+    thread2 = threading.Thread(target=playback, args=(filename, out_,))
 
     thread1.start()
     thread2.start()
@@ -78,10 +123,12 @@ def click_action(button):
     plotnames = glob.glob(os.getcwd() + '/plots/*.png')
     latest_file = max(plotnames, key=os.path.getctime)
     if "blad" in latest_file: #wyswietlenie wynikow
-        root_tk.geometry("250x100")
+        root_tk.geometry("250x250")
         my_string.set("Bledny pomiar:\n zaklocenia podczas pomiaru!")
         button.config(text=f"Wykonaj Badanie Ponownie!")
+        in_drop.pack()
         button.pack()
+        out_drop.pack()
         root_tk.update()
     else:
         root_tk.geometry("800x800")
