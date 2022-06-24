@@ -1,11 +1,9 @@
-import subprocess
 import threading
 import time, datetime
 import scipy.io.wavfile as wavfile
 import os, glob
 
 import sounddevice as sd
-import soundfile as sf
 
 from utils.spectrum import get_spectrum
 
@@ -91,11 +89,6 @@ def playback(filename: str, device: str):
     # cmd_play = ["python", "utils/playback.py", filename, "-d", device]
     # subprocess.run(cmd_play)
 
-    file_name = (
-        "nagranie_"
-        + str(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
-        + ".wav"
-    )
     print("rozpoczecie playbacku")
     from scipy.io.wavfile import read
 
